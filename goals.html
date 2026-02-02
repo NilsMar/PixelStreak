@@ -504,7 +504,8 @@
     <script>
         // State
         let goals = [];
-        let currentYear = new Date().getFullYear();
+        const actualCurrentYear = new Date().getFullYear();
+        let currentYear = actualCurrentYear;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -549,7 +550,7 @@
 
         // Year Selector
         function renderYearSelector() {
-            const years = [currentYear, currentYear + 1].filter(year => year >= 2026);
+            const years = [actualCurrentYear, actualCurrentYear + 1].filter(year => year >= 2026);
             yearSelector.innerHTML = years.map(year => `
                 <button class="year-btn ${year === currentYear ? 'active' : ''}" data-year="${year}">
                     ${year}
