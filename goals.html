@@ -217,6 +217,20 @@
         .goal-title {
             font-size: 1.2rem;
             font-weight: 600;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .goal-title:hover {
+            background-color: var(--bg-secondary);
+        }
+
+        .goal-title[contenteditable="true"] {
+            outline: 2px solid var(--accent);
+            background-color: var(--bg-secondary);
+            cursor: text;
         }
 
         .goal-stats {
@@ -463,7 +477,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎯 Goal Tracker</h1>
+            <h1>PixelStreak</h1>
             <div class="header-controls">
                 <div class="year-selector" id="yearSelector"></div>
                 <label class="theme-toggle">
@@ -649,7 +663,7 @@
                     <div class="goal-card" data-goal-index="${goalIndex}">
                         <div class="goal-header">
                             <div>
-                                <h3 class="goal-title">${escapeHtml(goal.name)}</h3>
+                                <h3 class="goal-title" data-goal-index="${goalIndex}" contenteditable="false" spellcheck="false">${escapeHtml(goal.name)}</h3>
                                 <div class="goal-stats">
                                     ${stats.completed} completed · ${stats.missed} missed · ${stats.streak} day streak
                                 </div>
@@ -749,6 +763,26 @@
             return div.innerHTML;
         }
 
+        // Save goal title after editing
+        function saveGoalTitle(titleElement) {
+            const goalIndex = parseInt(titleElement.dataset.goalIndex);
+            const newName = titleElement.textContent.trim();
+
+            // Validate
+            if (!newName) {
+                // Restore original value if empty
+                titleElement.textContent = titleElement.dataset.originalValue;
+            } else if (newName !== titleElement.dataset.originalValue) {
+                // Save the new name
+                goals[goalIndex].name = newName;
+                saveGoals();
+            }
+
+            // Make non-editable
+            titleElement.contentEditable = 'false';
+            delete titleElement.dataset.originalValue;
+        }
+
         // Event Listeners
         function setupEventListeners() {
             // Add goal form
@@ -781,17 +815,39 @@
 
             // Cell clicks and delete buttons
             goalsContainer.addEventListener('click', (e) => {
+                // Handle goal title click to edit
+                if (e.target.classList.contains('goal-title')) {
+                    const titleElement = e.target;
+                    const goalIndex = parseInt(titleElement.dataset.goalIndex);
+
+                    // Store original value in case of cancel
+                    titleElement.dataset.originalValue = titleElement.textContent;
+
+                    // Make editable
+                    titleElement.contentEditable = 'true';
+                    titleElement.focus();
+
+                    // Select all text
+                    const range = document.createRange();
+                    range.selectNodeContents(titleElement);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    return;
+                }
+
                 // Handle cell click
                 if (e.target.classList.contains('cell') && !e.target.dataset.future) {
                     const goalIndex = parseInt(e.target.dataset.goalIndex);
                     const dateStr = e.target.dataset.date;
-                    
+
                     if (!goals[goalIndex].days) {
                         goals[goalIndex].days = {};
                     }
-                    
+
                     const currentStatus = goals[goalIndex].days[dateStr];
-                    
+
                     // Cycle through: none -> completed -> missed -> none
                     if (!currentStatus) {
                         goals[goalIndex].days[dateStr] = 'completed';
@@ -800,7 +856,7 @@
                     } else {
                         delete goals[goalIndex].days[dateStr];
                     }
-                    
+
                     saveGoals();
                     renderGoals();
                 }
@@ -812,6 +868,28 @@
                         goals.splice(goalIndex, 1);
                         saveGoals();
                         renderGoals();
+                    }
+                }
+            });
+
+            // Handle goal title editing
+            goalsContainer.addEventListener('blur', (e) => {
+                if (e.target.classList.contains('goal-title') && e.target.contentEditable === 'true') {
+                    saveGoalTitle(e.target);
+                }
+            }, true);
+
+            goalsContainer.addEventListener('keydown', (e) => {
+                if (e.target.classList.contains('goal-title') && e.target.contentEditable === 'true') {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.target.blur();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        // Restore original value
+                        e.target.textContent = e.target.dataset.originalValue;
+                        e.target.contentEditable = 'false';
+                        delete e.target.dataset.originalValue;
                     }
                 }
             });
