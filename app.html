@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelStreak - Goal Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PixelStreak</h1>
+            <div class="header-controls">
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+                <div class="year-selector" id="yearSelector"></div>
+                <label class="theme-toggle">
+                    <span>☀️</span>
+                    <input type="checkbox" id="themeToggle">
+                    <div class="toggle-slider"></div>
+                    <span>🌙</span>
+                </label>
+            </div>
+        </header>
+
+        <section class="add-goal-section">
+            <form class="add-goal-form" id="addGoalForm">
+                <input type="text" id="goalInput" placeholder="Enter a new goal (e.g., Run Daily for 30 Days)" required>
+                <button type="submit">Add Goal</button>
+            </form>
+        </section>
+
+        <div class="goals-container" id="goalsContainer"></div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
