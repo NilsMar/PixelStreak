@@ -49,7 +49,8 @@ export async function checkAuth() {
 
 // Send password reset email
 export async function sendPasswordReset(email) {
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const redirectTo = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) throw error;
 }
 
