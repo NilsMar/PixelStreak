@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<p>Generating icons... check your Downloads folder.</p>
+<canvas id="c"></canvas>
+<script>
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1a1a2e"/>
+  <rect x="68" y="107" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="68" y="185" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="68" y="263" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="146" y="107" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="146" y="185" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="224" y="107" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="68" y="341" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="146" y="263" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="146" y="341" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="224" y="185" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="224" y="263" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="224" y="341" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="302" y="107" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <rect x="302" y="185" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <rect x="302" y="263" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <rect x="302" y="341" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <rect x="380" y="107" width="64" height="64" rx="8" fill="#2dd4bf"/>
+  <rect x="380" y="185" width="64" height="64" rx="8" fill="#2dd4bf"/>
+  <rect x="380" y="263" width="64" height="64" rx="8" fill="#2dd4bf"/>
+  <rect x="380" y="341" width="64" height="64" rx="8" fill="#2dd4bf"/>
+</svg>`;
+
+// Maskable version — adds padding so safe zone is center 80%
+const svgMaskable = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#1a1a2e"/>
+  <rect x="68" y="107" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="68" y="185" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="68" y="263" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="146" y="107" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="146" y="185" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="224" y="107" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="68" y="341" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="146" y="263" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="146" y="341" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="224" y="185" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="224" y="263" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="224" y="341" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="302" y="107" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <rect x="302" y="185" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <rect x="302" y="263" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <rect x="302" y="341" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <rect x="380" y="107" width="64" height="64" rx="8" fill="#2dd4bf"/>
+  <rect x="380" y="185" width="64" height="64" rx="8" fill="#2dd4bf"/>
+  <rect x="380" y="263" width="64" height="64" rx="8" fill="#2dd4bf"/>
+  <rect x="380" y="341" width="64" height="64" rx="8" fill="#2dd4bf"/>
+</svg>`;
+
+function generatePNG(svgStr, size, filename) {
+  const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.getElementById('c');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, size, size);
+    canvas.toBlob((pngBlob) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(pngBlob);
+      a.download = filename;
+      a.click();
+    });
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+}
+
+// Generate with small delays to avoid download conflicts
+generatePNG(svg, 192, 'icon-192.png');
+setTimeout(() => generatePNG(svg, 512, 'icon-512.png'), 500);
+setTimeout(() => generatePNG(svgMaskable, 512, 'icon-maskable-512.png'), 1000);
+</script>
+</body>
+</html>
