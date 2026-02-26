@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#1a1a2e"/>
+
+  <!--
+    5-column streak graph, 4 rows each
+    Cell size: 64px, gap: 14px → stride: 78px
+    Grid width: 5*64 + 4*14 = 376 → offset x: (512-376)/2 = 68
+    Grid height: 4*64 + 3*14 = 298 → offset y: (512-298)/2 = 107
+    Pattern (bottom-up): col1=1, col2=2, col3=3, col4=4, col5=4 (full streak)
+  -->
+
+  <!-- Empty cells (dimmed) -->
+  <!-- Col 1 rows 1-3 -->
+  <rect x="68" y="107" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="68" y="185" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="68" y="263" width="64" height="64" rx="8" fill="#2d3748"/>
+  <!-- Col 2 rows 1-2 -->
+  <rect x="146" y="107" width="64" height="64" rx="8" fill="#2d3748"/>
+  <rect x="146" y="185" width="64" height="64" rx="8" fill="#2d3748"/>
+  <!-- Col 3 row 1 -->
+  <rect x="224" y="107" width="64" height="64" rx="8" fill="#2d3748"/>
+
+  <!-- Filled cells (teal) -->
+  <!-- Col 1: bottom row only -->
+  <rect x="68" y="341" width="64" height="64" rx="8" fill="#5eead4"/>
+  <!-- Col 2: bottom 2 rows -->
+  <rect x="146" y="263" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="146" y="341" width="64" height="64" rx="8" fill="#5eead4"/>
+  <!-- Col 3: bottom 3 rows -->
+  <rect x="224" y="185" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="224" y="263" width="64" height="64" rx="8" fill="#5eead4"/>
+  <rect x="224" y="341" width="64" height="64" rx="8" fill="#5eead4"/>
+  <!-- Col 4: all 4 rows -->
+  <rect x="302" y="107" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <rect x="302" y="185" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <rect x="302" y="263" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <rect x="302" y="341" width="64" height="64" rx="8" fill="#14b8a6"/>
+  <!-- Col 5: all 4 rows (brightest, current streak) -->
+  <rect x="380" y="107" width="64" height="64" rx="8" fill="#2dd4bf"/>
+  <rect x="380" y="185" width="64" height="64" rx="8" fill="#2dd4bf"/>
+  <rect x="380" y="263" width="64" height="64" rx="8" fill="#2dd4bf"/>
+  <rect x="380" y="341" width="64" height="64" rx="8" fill="#2dd4bf"/>
+</svg>

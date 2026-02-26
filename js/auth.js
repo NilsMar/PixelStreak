@@ -41,7 +41,7 @@ export async function getCurrentUser() {
 export async function checkAuth() {
     const user = await getCurrentUser();
     if (!user) {
-        window.location.href = '/index.html';
+        window.location.href = 'index.html';
         return null;
     }
     return user;
