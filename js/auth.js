@@ -47,5 +47,17 @@ export async function checkAuth() {
     return user;
 }
 
+// Send password reset email
+export async function sendPasswordReset(email) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+}
+
+// Update password (used after clicking reset link)
+export async function updatePassword(newPassword) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+}
+
 // Export supabase client for use in app.js
 export { supabase };
