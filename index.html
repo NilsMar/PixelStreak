@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PixelStreak - Login</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script>
+        // Apply saved theme before page renders to avoid flash
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 </head>
 <body>
     <div class="auth-container">
@@ -12,6 +19,12 @@
             <div class="auth-header">
                 <h1>PixelStreak</h1>
                 <p id="authSubtitle">Sign in to track your goals</p>
+                <label class="theme-toggle" style="justify-content: center; margin-top: 12px;">
+                    <span>☀️</span>
+                    <input type="checkbox" id="themeToggle">
+                    <div class="toggle-slider"></div>
+                    <span>🌙</span>
+                </label>
             </div>
 
             <div class="error-message" id="errorMessage"></div>
@@ -40,6 +53,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module">
         import { signIn, signUp, getCurrentUser } from './js/auth.js';
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.checked = (localStorage.getItem('theme') || 'light') === 'dark';
+        themeToggle.addEventListener('change', () => {
+            const theme = themeToggle.checked ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        });
 
         // Check if already logged in
         getCurrentUser().then(user => {
