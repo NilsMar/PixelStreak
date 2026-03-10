@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pixelstreak-v2';
+const CACHE_NAME = 'pixelstreak-v3';
 
 const STATIC_ASSETS = [
   './',
