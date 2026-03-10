@@ -1,4 +1,5 @@
 import { supabase, checkAuth, signOut } from './auth.js';
+import { TELEGRAM_BOT_USERNAME } from '../config.js';
 
 // State
 let goals = [];
@@ -16,6 +17,14 @@ const yearSelector = document.getElementById('yearSelector');
 const themeToggle = document.getElementById('themeToggle');
 const tooltip = document.getElementById('tooltip');
 const logoutBtn = document.getElementById('logoutBtn');
+const telegramBtn = document.getElementById('telegramBtn');
+const telegramModal = document.getElementById('telegramModal');
+const telegramModalTitle = document.getElementById('telegramModalTitle');
+const telegramModalBody = document.getElementById('telegramModalBody');
+const telegramModalAction = document.getElementById('telegramModalAction');
+const telegramModalClose = document.getElementById('telegramModalClose');
+const telegramLinkWrap = document.getElementById('telegramLinkWrap');
+const telegramLink = document.getElementById('telegramLink');
 
 // Initialize
 async function init() {
@@ -27,6 +36,7 @@ async function init() {
     renderYearSelector();
     renderGoals();
     setupEventListeners();
+    updateTelegramButton();
 }
 
 // Database Operations
@@ -489,6 +499,87 @@ function setupEventListeners() {
         }
     });
 }
+
+// --- Telegram Integration ---
+
+async function isTelegramConnected() {
+    const { data } = await supabase
+        .from('telegram_accounts')
+        .select('chat_id')
+        .eq('user_id', currentUser.id)
+        .single();
+    return !!data;
+}
+
+async function updateTelegramButton() {
+    const connected = await isTelegramConnected();
+    telegramBtn.textContent = connected ? 'Telegram ✅' : 'Telegram';
+    telegramBtn.dataset.connected = connected ? 'true' : 'false';
+}
+
+async function openTelegramModal() {
+    const connected = telegramBtn.dataset.connected === 'true';
+
+    if (connected) {
+        telegramModalTitle.textContent = 'Telegram Connected';
+        telegramModalBody.textContent = "You'll receive goal reminders each evening. Tap a button in the message to mark goals as done or missed.";
+        telegramLinkWrap.style.display = 'none';
+        telegramModalAction.textContent = 'Disconnect';
+        telegramModalAction.onclick = disconnectTelegram;
+    } else {
+        telegramModalTitle.textContent = 'Connect Telegram';
+        telegramModalBody.textContent = 'Tap the button below to open your bot in Telegram. Send the /start message it shows you.';
+        telegramModalAction.textContent = 'Generate Link';
+        telegramModalAction.onclick = generateTelegramLink;
+        telegramLinkWrap.style.display = 'none';
+        telegramLink.textContent = '';
+        telegramLink.href = '';
+    }
+
+    telegramModal.style.display = 'flex';
+}
+
+async function generateTelegramLink() {
+    telegramModalAction.disabled = true;
+    telegramModalAction.textContent = 'Generating...';
+
+    // Clean up any old tokens for this user
+    await supabase.from('telegram_link_tokens').delete().eq('user_id', currentUser.id);
+
+    const token = crypto.randomUUID();
+    const { error } = await supabase
+        .from('telegram_link_tokens')
+        .insert({ token, user_id: currentUser.id });
+
+    if (error) {
+        alert('Failed to generate link. Please try again.');
+        telegramModalAction.disabled = false;
+        telegramModalAction.textContent = 'Generate Link';
+        return;
+    }
+
+    const url = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${token}`;
+    telegramLink.href = url;
+    telegramLink.textContent = `Open @${TELEGRAM_BOT_USERNAME}`;
+    telegramLinkWrap.style.display = 'block';
+    telegramModalBody.textContent = 'Click the link below to open Telegram. The bot will connect automatically.';
+    telegramModalAction.textContent = 'Done';
+    telegramModalAction.disabled = false;
+    telegramModalAction.onclick = async () => {
+        telegramModal.style.display = 'none';
+        await updateTelegramButton();
+    };
+}
+
+async function disconnectTelegram() {
+    await supabase.from('telegram_accounts').delete().eq('user_id', currentUser.id);
+    telegramModal.style.display = 'none';
+    await updateTelegramButton();
+}
+
+telegramBtn.addEventListener('click', openTelegramModal);
+telegramModalClose.addEventListener('click', () => { telegramModal.style.display = 'none'; });
+telegramModal.addEventListener('click', (e) => { if (e.target === telegramModal) telegramModal.style.display = 'none'; });
 
 // Initialize app
 init();

@@ -18,6 +18,7 @@
             <h1>PixelStreak</h1>
             <div class="header-controls">
                 <button class="logout-btn" id="logoutBtn">Logout</button>
+                <button class="telegram-btn" id="telegramBtn" title="Connect Telegram">Telegram</button>
                 <div class="year-selector" id="yearSelector"></div>
                 <label class="theme-toggle">
                     <span>☀️</span>
@@ -39,6 +40,21 @@
     </div>
 
     <div class="tooltip" id="tooltip"></div>
+
+    <!-- Telegram connect modal -->
+    <div class="modal-overlay" id="telegramModal" style="display:none">
+        <div class="modal-card">
+            <h2 id="telegramModalTitle">Connect Telegram</h2>
+            <p id="telegramModalBody"></p>
+            <div id="telegramLinkWrap" style="display:none">
+                <a class="telegram-link" id="telegramLink" target="_blank" rel="noopener"></a>
+            </div>
+            <div class="modal-actions">
+                <button id="telegramModalAction" class="btn-primary"></button>
+                <button id="telegramModalClose" class="btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         if ('serviceWorker' in navigator) {
