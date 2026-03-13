@@ -20,27 +20,21 @@ const SUPABASE_URL = 'https://jqdxnveoflukktqemxzf.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ALTt9CJDYfTUIB3uNEpx1g_kNHHVq9a';
 const AUTH_FILE   = join(homedir(), '.pixelstreak-auth.json');
 
-// ─── ANSI helpers ────────────────────────────────────────────────────────────
+// ─── Glyph constants (distinct shapes, no colour needed) ─────────────────────
+//
+//   █  FULL BLOCK     — completed  (maximum ink, clearly done)
+//   ▒  MEDIUM SHADE   — missed     (hatching, visually lighter than full)
+//   ·  MIDDLE DOT     — not tracked (minimal mark)
+//   ◉  FISHEYE        — today      (circle with dot, stands out)
 
-const C = {
-  reset  : '\x1b[0m',
-  bold   : '\x1b[1m',
-  dim    : '\x1b[2m',
-  teal   : '\x1b[36m',
-  red    : '\x1b[31m',
-  yellow : '\x1b[33m',
-  gray   : '\x1b[90m',
-  white  : '\x1b[97m',
-  blue   : '\x1b[34m',
-};
+const GLYPH_COMPLETED = '█';
+const GLYPH_MISSED    = '▒';
+const GLYPH_EMPTY     = '·';
+const GLYPH_TODAY     = '◉';
 
-const clr  = (code, text) => `${code}${text}${C.reset}`;
-const bold = (text)       => clr(C.bold,          text);
-const dim  = (text)       => clr(C.dim,           text);
-const teal = (text)       => clr(C.teal,          text);
-const red  = (text)       => clr(C.red,           text);
-const yel  = (text)       => clr(C.yellow,        text);
-const gray = (text)       => clr(C.gray,          text);
+// Plain text helpers — no ANSI escape codes
+const bold = (text) => text;   // headings already stand out via === framing
+const dim  = (text) => text;
 
 // ─── Supabase API ─────────────────────────────────────────────────────────────
 
@@ -175,11 +169,11 @@ function renderGoal(goal, year) {
       const isToday       = key === todayKey;
       const status        = goal.days?.[key];
 
-      if (isToday)                      return yel('◉') + ' ';
-      if (!inCurrentYear || isFuture)   return gray('·') + ' ';
-      if (status === 'completed')       return teal('■') + ' ';
-      if (status === 'missed')          return red('▪') + ' ';
-      return gray('·') + ' ';
+      if (isToday)                      return GLYPH_TODAY     + ' ';
+      if (!inCurrentYear || isFuture)   return GLYPH_EMPTY     + ' ';
+      if (status === 'completed')       return GLYPH_COMPLETED + ' ';
+      if (status === 'missed')          return GLYPH_MISSED    + ' ';
+      return GLYPH_EMPTY + ' ';
     }).join('');
 
     return prefix + cells;
@@ -187,12 +181,7 @@ function renderGoal(goal, year) {
 
   // ── stats line ────────────────────────────────────────────────────────────
   const statsLine =
-    '  ' +
-    teal(`${stats.completed} completed`) +
-    dim(' · ') +
-    red(`${stats.missed} missed`) +
-    dim(' · ') +
-    yel(`${stats.streak} day streak`);
+    `  ${stats.completed} completed · ${stats.missed} missed · ${stats.streak} day streak`;
 
   return [
     '',
@@ -320,35 +309,35 @@ async function main() {
 
   // Header
   console.log('');
-  console.log(`  ${clr(C.bold + C.teal, 'PixelStreak')}  ${dim(`— ${year}`)}`);
-  console.log(dim('  ' + '─'.repeat(44)));
+  console.log(`  PixelStreak — ${year}`);
+  console.log('  ' + '─'.repeat(44));
 
   let accessToken;
   try {
     accessToken = await getAccessToken();
   } catch (err) {
-    console.error(red(`\n  Login failed: ${err.message}\n`));
+    console.error(`\n  Login failed: ${err.message}\n`);
     process.exit(1);
   }
 
   let goals;
   try {
-    process.stdout.write(dim('  Loading goals…'));
+    process.stdout.write('  Loading goals…');
     goals = await fetchGoals(accessToken);
     process.stdout.write('\r' + ' '.repeat(25) + '\r');
   } catch (err) {
     // Token might be stale
     if (/jwt|expired|401/i.test(err.message)) {
       clearAuth();
-      console.error(red('\n  Session expired — please run again to log in.\n'));
+      console.error('\n  Session expired — please run again to log in.\n');
     } else {
-      console.error(red(`\n  Error fetching goals: ${err.message}\n`));
+      console.error(`\n  Error fetching goals: ${err.message}\n`);
     }
     process.exit(1);
   }
 
   if (!goals.length) {
-    console.log(dim('\n  No goals found. Add some in the web app first!\n'));
+    console.log('\n  No goals found. Add some in the web app first!\n');
     return;
   }
 
@@ -359,13 +348,12 @@ async function main() {
   // Legend
   console.log('');
   console.log(
-    dim('  Legend : ') +
-    teal('■') + dim(' Completed   ') +
-    red('▪') + dim(' Missed   ') +
-    gray('·') + dim(' Empty   ') +
-    yel('◉') + dim(' Today')
+    `  Legend : ${GLYPH_COMPLETED} Completed   ` +
+    `${GLYPH_MISSED} Missed   ` +
+    `${GLYPH_EMPTY} Empty   ` +
+    `${GLYPH_TODAY} Today`
   );
-  console.log(dim('  Tip    : pass a year as argument, e.g.  node terminal/pixel-streak.js 2025'));
+  console.log('  Tip    : pass a year as argument, e.g.  node terminal/pixel-streak.js 2025');
   console.log('');
 }
 
