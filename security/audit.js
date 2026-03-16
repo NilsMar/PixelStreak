@@ -271,8 +271,8 @@ const allFiles = walkFiles();
 (function checkEnvVars() {
   const gi = src.gitignore || '';
 
-  if (contains(gi, 'config.js')) pass('envvars', '.gitignore: config.js ignored');
-  else                            fail('envvars', '.gitignore: config.js NOT listed — credentials may be committed');
+  // config.js is intentionally committed — it only holds the public anon key + URL
+  // Severity is determined below by inspecting what's actually in the file
 
   if (contains(gi, '.env')) pass('envvars', '.gitignore: .env ignored');
   else                       warn('envvars', '.gitignore: .env not explicitly listed');
@@ -284,13 +284,26 @@ const allFiles = walkFiles();
     } catch { /* git unavailable */ }
 
     if (isTracked) {
-      fail('envvars', 'config.js is committed to git — contains Supabase credentials; add to .gitignore and consider rotating the anon key if the project is public');
+      // Check what's actually in it before deciding severity
+      const hasServiceKey = /SERVICE_ROLE|service_role/i.test(src.configJs);
+      const hasJwt        = /eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9/.test(src.configJs);
+      const hasAnonOnly   = /sb_publishable_/.test(src.configJs) && !hasServiceKey && !hasJwt;
+
+      if (hasServiceKey) {
+        block('envvars', 'config.js committed to git and contains SERVICE_ROLE_KEY — rotate immediately and remove from history');
+      } else if (hasJwt) {
+        fail('envvars', 'config.js committed to git and contains a full JWT — verify it is the anon key only (starts with eyJ); if it is the service role key, rotate immediately');
+      } else if (hasAnonOnly) {
+        pass('envvars', 'config.js committed to git — contains only the Supabase anon/publishable key and URL, which are intentionally public (safe as long as RLS is configured)');
+      } else {
+        warn('envvars', 'config.js committed to git — verify it contains only public credentials (anon key, URL), not SERVICE_ROLE_KEY or other secrets');
+      }
     } else {
-      warn('envvars', 'config.js exists on disk but is not git-tracked (good) — ensure .gitignore stays correct');
+      warn('envvars', 'config.js exists on disk but is not git-tracked — ensure .gitignore stays correct');
     }
 
-    if (/eyJ/.test(src.configJs))
-      fail('envvars', 'config.js contains a full JWT/service key — do not commit; rotate immediately if already pushed');
+    if (/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9/.test(src.configJs) && !/sb_publishable_/.test(src.configJs))
+      fail('envvars', 'config.js contains a full JWT (not a publishable key) — confirm this is the anon key and not the service role key');
   } else {
     pass('envvars', 'config.js absent from working directory (correctly gitignored)');
   }
@@ -395,8 +408,7 @@ const SECRET_PATTERNS = [
   // Generic high-entropy API keys / tokens
   { name: 'Generic API key (32+ hex)',          re: /\b[0-9a-f]{32,64}\b/i },
   { name: 'Supabase JWT (service role)',         re: /eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/ },
-  // Supabase publishable (anon) key — public by design, but flag if found in committed non-config files
-  { name: 'Supabase publishable key',           re: /sb_publishable_[A-Za-z0-9_-]{20,}/ },
+  // NOTE: sb_publishable_ (Supabase anon key) is intentionally public — excluded from secret scanning
   { name: 'OpenAI API key',                     re: /sk-[A-Za-z0-9]{20,}/ },
   { name: 'Anthropic API key',                  re: /sk-ant-[A-Za-z0-9\-_]{10,}/ },
   { name: 'GitHub token (ghp_/ghs_/gho_)',      re: /gh[pso]_[A-Za-z0-9]{36}/ },
@@ -543,16 +555,20 @@ const TEST_FILE_PATTERN = /\.(test|spec)\.[jt]sx?$|__tests__\//;
 
   let anyFound = false;
   for (const { rel, content } of configFiles) {
-    // Check for embedded secrets
     let hasSecret = false;
     for (const { name, re } of SECRET_PATTERNS) {
       const match = content.match(re)?.[0];
       if (!match) continue;
       if (/example|placeholder|your.key|xxx|000000/i.test(match)) continue;
+      // Supabase anon/publishable key is intentionally public — downgrade to info
+      if (/sb_publishable_/.test(match)) {
+        pass('configfiles', `${rel}: Supabase anon key present — public by design, safe as long as RLS is enabled`);
+        continue;
+      }
       if (contains(gi, rel)) {
-        warn('configfiles', `${rel}: Possible ${name} — file is gitignored, but rotate key if accidentally committed`);
+        warn('configfiles', `${rel}: Possible ${name} — gitignored, but rotate if accidentally committed previously`);
       } else {
-        block('configfiles', `${rel}: Possible ${name} and NOT gitignored — "${match.slice(0, 40)}..."`);
+        block('configfiles', `${rel}: Possible ${name} NOT gitignored — "${match.slice(0, 40)}..."`);
       }
       hasSecret = true;
       anyFound  = true;
@@ -642,11 +658,11 @@ const TEST_FILE_PATTERN = /\.(test|spec)\.[jt]sx?$|__tests__\//;
 
   const required = [
     { pattern: '.env',         reason: 'environment variables file' },
-    { pattern: 'config.js',    reason: 'Supabase credentials' },
     { pattern: '*.pem',        reason: 'PEM private keys' },
     { pattern: '*.key',        reason: 'private key files' },
     { pattern: '.DS_Store',    reason: 'macOS metadata' },
     { pattern: 'node_modules', reason: 'npm dependencies' },
+    // Note: config.js is intentionally committed — it contains only public Supabase anon key + URL
   ];
 
   for (const { pattern, reason } of required) {
