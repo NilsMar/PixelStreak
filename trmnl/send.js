@@ -47,23 +47,23 @@ function calculateStreak(days, today) {
 }
 
 /**
- * Builds the pixel grid as 7 rows (Sun–Sat), each with WEEKS_TO_SHOW chars.
+ * Builds the pixel grid as 7 rows (Sun–Sat), each an array of WEEKS_TO_SHOW cell types.
  * Matches the column-per-week orientation of the web app.
  *
- * Glyphs:
- *   █  completed
- *   ░  missed
- *   ·  not tracked / future
- *   ◆  today
+ * Cell types:
+ *   'c'  completed
+ *   'm'  missed
+ *   't'  today
+ *   '.'  not tracked / future
  */
 function buildGrid(days, today) {
     // Sunday of the oldest week we want to show
     const start = new Date(today);
     start.setDate(start.getDate() - start.getDay() - (WEEKS_TO_SHOW - 1) * 7);
 
-    const rows = []; // 7 rows (one per day of week), WEEKS_TO_SHOW chars each
+    const rows = []; // 7 rows (one per day of week), each an array of WEEKS_TO_SHOW cell types
     for (let d = 0; d < 7; d++) {
-        let row = '';
+        const row = [];
         for (let w = 0; w < WEEKS_TO_SHOW; w++) {
             const date = new Date(start);
             date.setDate(date.getDate() + w * 7 + d);
@@ -72,15 +72,14 @@ function buildGrid(days, today) {
             const isFuture = date > today;
             const status = days[key];
 
-            if (isToday)              row += '◆';
-            else if (isFuture)        row += '·';
-            else if (!status)         row += '·';
-            else if (status === 'completed') row += '█';
-            else                      row += '░';
+            if (isToday)                     row.push('t');
+            else if (isFuture || !status)    row.push('.');
+            else if (status === 'completed') row.push('c');
+            else                             row.push('m');
         }
         rows.push(row);
     }
-    return rows; // ['········', '·██·████', …]  (7 strings)
+    return rows; // [['.','.','c','m',…], …]  (7 arrays of WEEKS_TO_SHOW cell types)
 }
 
 function processGoal(goal, today) {

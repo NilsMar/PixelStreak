@@ -13,9 +13,9 @@
       .completed (int)     total completed days all-time
       .total     (int)     completed + missed days
       .rate      (string)  e.g. "70%"
-      .grid[]    (array)   7 strings, one per day-of-week (Sun–Sat),
-                           each WEEKS_TO_SHOW chars wide.
-                           █ = completed  ░ = missed  · = none  ◆ = today
+      .grid[]    (array)   7 arrays, one per day-of-week (Sun–Sat),
+                           each WEEKS_TO_SHOW cell-type strings wide.
+                           'c' = completed  'm' = missed  '.' = none  't' = today
 
     updated      (string)  e.g. "Mar 15, 2026"
 -->
@@ -28,8 +28,12 @@
   .ps-info         { flex: 1; }
   .ps-name         { font-size: 16px; font-weight: bold; line-height: 1.2;
                      margin-bottom: 4px; }
-  .ps-grid         { font-family: monospace; font-size: 10px; line-height: 1.25;
-                     letter-spacing: 2px; }
+  .ps-grid         { display: flex; flex-direction: column; gap: 2px; }
+  .ps-grid-row     { display: flex; gap: 2px; }
+  .ps-cell         { width: 9px; height: 9px; border-radius: 1px; background: #ccc; }
+  .ps-cell-c       { background: #000; }
+  .ps-cell-m       { background: #777; }
+  .ps-cell-t       { background: #000; box-shadow: inset 0 0 0 1px #fff; }
   .ps-aside        { text-align: right; min-width: 70px; }
   .ps-streak-num   { font-size: 30px; font-weight: bold; line-height: 1; }
   .ps-streak-lbl   { font-size: 10px; line-height: 1.2; }
@@ -45,7 +49,11 @@
       <div class="ps-info">
         <div class="ps-name">{{ goal.name }}</div>
         <div class="ps-grid">
-          {% for row in goal.grid %}{{ row }}<br>{% endfor %}
+          {% for row in goal.grid %}
+          <div class="ps-grid-row">
+            {% for cell in row %}<div class="ps-cell{% if cell == 'c' %} ps-cell-c{% elsif cell == 'm' %} ps-cell-m{% elsif cell == 't' %} ps-cell-t{% endif %}"></div>{% endfor %}
+          </div>
+          {% endfor %}
         </div>
       </div>
 
