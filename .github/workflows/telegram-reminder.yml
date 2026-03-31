@@ -1,0 +1,16 @@
+name: Daily Telegram Reminder
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # 06:00 UTC = 07:00 BST (UK summer) / change to '0 7 * * *' in winter (GMT)
+  workflow_dispatch:      # allows manual trigger from GitHub Actions tab
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send daily goal reminders
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "${{ secrets.SUPABASE_URL }}/functions/v1/send-daily-goals" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
