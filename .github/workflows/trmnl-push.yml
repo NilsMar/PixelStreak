@@ -2,7 +2,7 @@ name: Push to TRMNL
 
 on:
   schedule:
-    - cron: '15 19 * * *'  # 19:15 UTC daily
+    - cron: '15 18 * * *'  # 18:15 UTC = 19:15 BST (summertime)
   workflow_dispatch:      # allows manual trigger from GitHub Actions tab
 
 jobs:

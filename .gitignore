@@ -3,7 +3,7 @@
 *.pem
 *.key
 node_modules/
-
 # Claude Code — ignore secrets but track commands/
+.claude
 .claude/mcp.json
 .claude/settings.local.json

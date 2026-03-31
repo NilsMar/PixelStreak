@@ -68,14 +68,15 @@ function buildGrid(days, today) {
             const date = new Date(start);
             date.setDate(date.getDate() + w * 7 + d);
             const key = dateKey(date);
-            const isToday = date.getTime() === today.getTime();
+            const isToday = dateKey(date) === dateKey(today);
             const isFuture = date > today;
             const status = days[key];
 
-            if (isToday)                     row.push('t');
-            else if (isFuture || !status)    row.push('.');
+            if (isFuture) row.push('.');
+            else if (isToday) row.push('t');
             else if (status === 'completed') row.push('c');
-            else                             row.push('m');
+            else if (status === 'missed') row.push('m');
+            else row.push('.');
         }
         rows.push(row);
     }
