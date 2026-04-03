@@ -57,22 +57,23 @@ function calculateStreak(days, today) {
  *   '.'  not tracked / future
  */
 function buildGrid(days, today) {
-    // Sunday of the oldest week we want to show
     const start = new Date(today);
     start.setDate(start.getDate() - start.getDay() - (WEEKS_TO_SHOW - 1) * 7);
 
-    const rows = []; // 7 rows (one per day of week), each an array of WEEKS_TO_SHOW cell types
+    const rows = [];
     for (let d = 0; d < 7; d++) {
         const row = [];
         for (let w = 0; w < WEEKS_TO_SHOW; w++) {
             const date = new Date(start);
             date.setDate(date.getDate() + w * 7 + d);
+
             const key = dateKey(date);
             const isToday = dateKey(date) === dateKey(today);
             const isFuture = date > today;
             const status = days[key];
 
             if (isFuture) row.push('.');
+            else if (isToday && status === 'completed') row.push('tc'); // ✅ NEW
             else if (isToday) row.push('t');
             else if (status === 'completed') row.push('c');
             else if (status === 'missed') row.push('m');
@@ -80,7 +81,7 @@ function buildGrid(days, today) {
         }
         rows.push(row);
     }
-    return rows; // [['.','.','c','m',…], …]  (7 arrays of WEEKS_TO_SHOW cell types)
+    return rows;
 }
 
 function processGoal(goal, today) {
@@ -149,7 +150,11 @@ async function main() {
 
     const processedGoals = goals.map(g => processGoal(g, today));
 
-    const updated = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const updated = today.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+    });
 
     console.log('Sending to TRMNL…');
     await sendToTrmnl({ goals: processedGoals, updated });

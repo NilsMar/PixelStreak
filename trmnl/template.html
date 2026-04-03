@@ -24,15 +24,9 @@
   .ps-goals        { padding: 8px 16px 40px; flex: 1; overflow: hidden; }
   .ps-goal         { display: flex; gap: 14px; align-items: flex-start;
                      padding: 6px 0; border-bottom: 1px solid currentColor; }
-  .ps-goal:last-child { border-bottom: none; }
-  .ps-info         { flex: 1; }
-  .ps-name         { font-size: 16px; font-weight: bold; line-height: 1.2;
-                     margin-bottom: 4px; }
 
-  .ps-grid         { display: flex; flex-direction: column; gap: 2px; }
   .ps-grid-row     { display: flex; gap: 2px; }
 
-  /* Base cell: outlined (empty state) */
   .ps-cell {
     width: 9px;
     height: 9px;
@@ -41,28 +35,33 @@
     box-shadow: inset 0 0 0 1px #999;
   }
 
-  /* Completed = solid */
   .ps-cell-c {
     background: #000;
     box-shadow: none;
   }
+  .ps-info {
+  flex: 1;
+  }
 
-  /* Missed = light fill */
   .ps-cell-m {
     background: #bbb;
     box-shadow: inset 0 0 0 1px #777;
   }
 
-  /* Today = inverted (very visible on e-ink) */
+  /* 👇 ADD THESE HERE */
+
+  /* Today (not completed) */
   .ps-cell-t {
     background: #fff;
     box-shadow: inset 0 0 0 2px #000;
   }
 
-  .ps-aside        { text-align: right; min-width: 70px; }
-  .ps-streak-num   { font-size: 30px; font-weight: bold; line-height: 1; }
-  .ps-streak-lbl   { font-size: 10px; line-height: 1.2; }
-  .ps-stat         { font-size: 11px; margin-top: 4px; line-height: 1.3; }
+  /* Today + completed */
+  .ps-cell-tc {
+    background: #000;
+    box-shadow: inset 0 0 0 2px #fff;
+  }
+
 </style>
 
 <div class="view view--full">
@@ -82,6 +81,7 @@
                   {% if cell == 'c' %} ps-cell-c
                   {% elsif cell == 'm' %} ps-cell-m
                   {% elsif cell == 't' %} ps-cell-t
+                  {% elsif cell == 'tc' %} ps-cell-tc
                   {% endif %}
                 "></div>
               {% endfor %}
@@ -105,7 +105,7 @@
 
   <div class="title_bar">
     <span class="title_bar_text">PixelStreak</span>
-    <span class="title_bar_text">{{ updated }}</span>
+    <span class="title_bar_text">Updated {{ updated }}</span>
   </div>
 
 </div>
