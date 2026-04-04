@@ -1,32 +1,57 @@
 <!--
-  PixelStreak — TRMNL Plugin Template
-  =====================================
-  Paste the contents of this file into the "Markup" field of your TRMNL
-  private plugin editor (trmnl.com → Plugins → New Private Plugin).
+  PixelStreak — TRMNL Plugin Template (FINAL CLEAN VERSION)
 
-  Data is pushed by trmnl/send.js via webhook. The Liquid variables come
-  from the merge_variables payload sent by that script:
-
-    goals[]
-      .name      (string)  goal name
-      .streak    (int)     current consecutive-day streak
-      .completed (int)     total completed days all-time
-      .total     (int)     completed + missed days
-      .rate      (string)  e.g. "70%"
-      .grid[]    (array)   7 arrays, one per day-of-week (Sun–Sat),
-                           each WEEKS_TO_SHOW cell-type strings wide.
-                           'c' = completed  'm' = missed  '.' = none  't' = today
-
-    updated      (string)  e.g. "Mar 15, 2026"
+  Supports:
+  'c'  = completed
+  'm'  = missed
+  '.'  = empty
+  't'  = today (not done)
+  'tc' = today + completed
 -->
 
 <style>
-  .ps-goals        { padding: 8px 16px 40px; flex: 1; overflow: hidden; }
-  .ps-goal         { display: flex; gap: 14px; align-items: flex-start;
-                     padding: 6px 0; border-bottom: 1px solid currentColor; }
+  .ps-goals {
+    padding: 8px 16px 40px;
+    flex: 1;
+    overflow: hidden;
+  }
 
-  .ps-grid-row     { display: flex; gap: 2px; }
+  .ps-goal {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 6px 0;
+    border-bottom: 1px solid currentColor;
+  }
 
+  .ps-goal:last-child {
+    border-bottom: none;
+  }
+
+  /* LEFT SIDE */
+  .ps-info {
+    flex: 1;
+  }
+
+  .ps-name {
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  .ps-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .ps-grid-row {
+    display: flex;
+    gap: 2px;
+  }
+
+  /* CELLS */
   .ps-cell {
     width: 9px;
     height: 9px;
@@ -39,29 +64,51 @@
     background: #000;
     box-shadow: none;
   }
-  .ps-info {
-  flex: 1;
-  }
 
   .ps-cell-m {
     background: #bbb;
     box-shadow: inset 0 0 0 1px #777;
   }
 
-  /* 👇 ADD THESE HERE */
-
-  /* Today (not completed) */
+  /* TODAY (not completed) */
   .ps-cell-t {
     background: #fff;
     box-shadow: inset 0 0 0 2px #000;
   }
 
-  /* Today + completed */
+  /* TODAY + COMPLETED */
   .ps-cell-tc {
     background: #000;
     box-shadow: inset 0 0 0 2px #fff;
   }
 
+  /* RIGHT SIDE */
+  .ps-aside {
+    text-align: right;
+    min-width: 70px;
+  }
+
+  .ps-streak-num {
+    font-size: 30px;
+    font-weight: bold;
+    line-height: 1;
+  }
+
+  .ps-streak-lbl {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  .ps-stat {
+    font-size: 11px;
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+
+  /* TITLE BAR POLISH */
+  .title_bar_text:last-child {
+    opacity: 0.7;
+  }
 </style>
 
 <div class="view view--full">
@@ -71,8 +118,10 @@
       {% for goal in goals limit:3 %}
       <div class="ps-goal">
 
+        <!-- LEFT -->
         <div class="ps-info">
           <div class="ps-name">{{ goal.name }}</div>
+
           <div class="ps-grid">
             {% for row in goal.grid %}
             <div class="ps-grid-row">
@@ -90,10 +139,14 @@
           </div>
         </div>
 
+        <!-- RIGHT -->
         <div class="ps-aside">
           <div class="ps-streak-num">{{ goal.streak }}</div>
           <div class="ps-streak-lbl">day<br>streak</div>
-          <div class="ps-stat">{{ goal.completed }}/{{ goal.total }}<br>{{ goal.rate }}</div>
+          <div class="ps-stat">
+            {{ goal.completed }}/{{ goal.total }}<br>
+            {{ goal.rate }}
+          </div>
         </div>
 
       </div>

@@ -199,8 +199,8 @@ Deno.serve(async (req) => {
     await answerCallback(id, feedback);
     await removeInlineKeyboard(from.id, message.message_id);
 
-    // Push updated goals to TRMNL display immediately
-    await pushToTrmnl(account.user_id);
+    // Push updated goals to TRMNL display immediately (best-effort, must not fail the response)
+    pushToTrmnl(account.user_id).catch(() => {});
 
     return new Response('OK');
   }
