@@ -1,8 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const TELEGRAM_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const TELEGRAM_TOKEN    = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
+const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SERVICE_ROLE_KEY')!;
+const TRMNL_WEBHOOK_URL = Deno.env.get('TRMNL_WEBHOOK_URL');
 const API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -30,6 +31,89 @@ async function removeInlineKeyboard(chat_id: number, message_id: number) {
     body: JSON.stringify({ chat_id, message_id, reply_markup: { inline_keyboard: [] } }),
   });
 }
+
+// ── TRMNL helpers (ported from trmnl/send.js) ────────────────────────────────
+
+const WEEKS_TO_SHOW = 8;
+
+function dateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function calculateStreak(days: Record<string, string>, today: Date): number {
+  let streak = 0;
+  const cur = new Date(today);
+  while (days[dateKey(cur)] === 'completed') {
+    streak++;
+    cur.setDate(cur.getDate() - 1);
+  }
+  return streak;
+}
+
+function buildGrid(days: Record<string, string>, today: Date): string[][] {
+  const start = new Date(today);
+  start.setDate(start.getDate() - start.getDay() - (WEEKS_TO_SHOW - 1) * 7);
+
+  const rows: string[][] = [];
+  for (let d = 0; d < 7; d++) {
+    const row: string[] = [];
+    for (let w = 0; w < WEEKS_TO_SHOW; w++) {
+      const date = new Date(start);
+      date.setDate(date.getDate() + w * 7 + d);
+
+      const key = dateKey(date);
+      const isToday = dateKey(date) === dateKey(today);
+      const isFuture = date > today;
+      const status = days[key];
+
+      if (isFuture) row.push('.');
+      else if (isToday && status === 'completed') row.push('tc');
+      else if (isToday) row.push('t');
+      else if (status === 'completed') row.push('c');
+      else if (status === 'missed') row.push('m');
+      else row.push('.');
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+function processGoal(goal: { name: string; days: Record<string, string> | null }, today: Date) {
+  const days = goal.days || {};
+  const completed = Object.values(days).filter(v => v === 'completed').length;
+  const missed    = Object.values(days).filter(v => v === 'missed').length;
+  const total     = completed + missed;
+  const rate      = total > 0 ? `${Math.round(completed / total * 100)}%` : '—';
+  const streak    = calculateStreak(days, today);
+  const grid      = buildGrid(days, today);
+  return { name: goal.name, streak, completed, total, rate, grid };
+}
+
+async function pushToTrmnl(userId: string) {
+  if (!TRMNL_WEBHOOK_URL) return;
+
+  const { data: goals } = await supabase
+    .from('goals')
+    .select('name, days')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
+
+  if (!goals?.length) return;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const processedGoals = goals.map(g => processGoal(g, today));
+  const updated = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  await fetch(TRMNL_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ merge_variables: { goals: processedGoals, updated } }),
+  });
+}
+
+// ── Request handler ───────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('OK');
@@ -114,6 +198,9 @@ Deno.serve(async (req) => {
     const feedback = action === 'completed' ? '✅ Marked as done!' : '❌ Marked as missed';
     await answerCallback(id, feedback);
     await removeInlineKeyboard(from.id, message.message_id);
+
+    // Push updated goals to TRMNL display immediately
+    await pushToTrmnl(account.user_id);
 
     return new Response('OK');
   }
