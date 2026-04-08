@@ -104,6 +104,20 @@ async function deleteGoal(goalId) {
     }
 }
 
+async function archiveGoal(goalId, archived) {
+    try {
+        const { error } = await supabase
+            .from('goals')
+            .update({ archived, updated_at: new Date().toISOString() })
+            .eq('id', goalId);
+
+        if (error) throw error;
+    } catch (error) {
+        console.error('Error archiving goal:', error);
+        alert('Failed to update goal. Please try again.');
+    }
+}
+
 // Theme Management (still using localStorage for preference)
 function loadTheme() {
     const theme = localStorage.getItem('theme') || 'light';
@@ -208,9 +222,58 @@ function calculateStreak(goal) {
     return streak;
 }
 
+// Render a single goal card
+function renderGoalCard(goal, goalIndex, weeks, monthLabels) {
+    const stats = calculateStats(goal);
+    const isArchived = !!goal.archived;
+
+    return `
+        <div class="goal-card${isArchived ? ' archived' : ''}" data-goal-index="${goalIndex}">
+            <div class="goal-header">
+                <div>
+                    <h3 class="goal-title" data-goal-index="${goalIndex}" contenteditable="false" spellcheck="false">${escapeHtml(goal.name)}</h3>
+                    <div class="goal-stats">
+                        ${stats.completed} completed · ${stats.missed} missed · ${stats.streak} day streak
+                    </div>
+                </div>
+                <div class="goal-actions">
+                    <button class="archive-goal" data-goal-index="${goalIndex}">${isArchived ? 'Unarchive' : 'Archive'}</button>
+                    <button class="delete-goal" data-goal-index="${goalIndex}">Delete</button>
+                </div>
+            </div>
+            <div class="contribution-grid-wrapper">
+                <div class="contribution-grid">
+                    <div class="grid-header">
+                        ${renderMonthLabels(monthLabels, weeks.length)}
+                    </div>
+                    ${renderGridRows(weeks, goal, goalIndex)}
+                </div>
+            </div>
+            <div class="legend">
+                <span>Less</span>
+                <div class="legend-item">
+                    <div class="legend-cell empty"></div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-cell completed"></div>
+                    <span>Completed</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-cell missed"></div>
+                    <span>Missed</span>
+                </div>
+                <span>More</span>
+            </div>
+        </div>
+    `;
+}
+
 // Render Goals
 function renderGoals() {
-    if (goals.length === 0) {
+    const activeGoals = goals.map((goal, idx) => ({ goal, idx })).filter(({ goal }) => !goal.archived);
+    const archivedGoals = goals.map((goal, idx) => ({ goal, idx })).filter(({ goal }) => goal.archived);
+
+    if (activeGoals.length === 0 && archivedGoals.length === 0) {
         goalsContainer.innerHTML = `
             <div class="empty-state">
                 <h2>No goals yet</h2>
@@ -224,48 +287,25 @@ function renderGoals() {
     const weeks = getWeeks(dates);
     const monthLabels = getMonthLabels(weeks, currentYear);
 
-    goalsContainer.innerHTML = goals.map((goal, goalIndex) => {
-        const stats = calculateStats(goal);
+    let html = '';
 
-        return `
-            <div class="goal-card" data-goal-index="${goalIndex}">
-                <div class="goal-header">
-                    <div>
-                        <h3 class="goal-title" data-goal-index="${goalIndex}" contenteditable="false" spellcheck="false">${escapeHtml(goal.name)}</h3>
-                        <div class="goal-stats">
-                            ${stats.completed} completed · ${stats.missed} missed · ${stats.streak} day streak
-                        </div>
-                    </div>
-                    <div class="goal-actions">
-                        <button class="delete-goal" data-goal-index="${goalIndex}">Delete</button>
-                    </div>
-                </div>
-                <div class="contribution-grid-wrapper">
-                    <div class="contribution-grid">
-                        <div class="grid-header">
-                            ${renderMonthLabels(monthLabels, weeks.length)}
-                        </div>
-                        ${renderGridRows(weeks, goal, goalIndex)}
-                    </div>
-                </div>
-                <div class="legend">
-                    <span>Less</span>
-                    <div class="legend-item">
-                        <div class="legend-cell empty"></div>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-cell completed"></div>
-                        <span>Completed</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-cell missed"></div>
-                        <span>Missed</span>
-                    </div>
-                    <span>More</span>
-                </div>
+    if (activeGoals.length === 0) {
+        html += `
+            <div class="empty-state">
+                <h2>No active goals</h2>
+                <p>Add a new goal above or unarchive an existing one.</p>
             </div>
         `;
-    }).join('');
+    } else {
+        html += activeGoals.map(({ goal, idx }) => renderGoalCard(goal, idx, weeks, monthLabels)).join('');
+    }
+
+    if (archivedGoals.length > 0) {
+        html += `<div class="archived-section-header"><span>Archived</span></div>`;
+        html += archivedGoals.map(({ goal, idx }) => renderGoalCard(goal, idx, weeks, monthLabels)).join('');
+    }
+
+    goalsContainer.innerHTML = html;
 }
 
 // Render month labels
@@ -439,6 +479,17 @@ function setupEventListeners() {
 
             await saveGoal(goals[goalIndex]);
             renderGoals();
+        }
+
+        // Handle archive/unarchive button
+        if (e.target.classList.contains('archive-goal')) {
+            const goalIndex = parseInt(e.target.dataset.goalIndex);
+            const goal = goals[goalIndex];
+            const newArchived = !goal.archived;
+            await archiveGoal(goal.id, newArchived);
+            goal.archived = newArchived;
+            renderGoals();
+            return;
         }
 
         // Handle delete button

@@ -370,6 +370,46 @@ h1 {
     color: var(--cell-missed);
 }
 
+.goal-actions button.archive-goal:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-secondary);
+}
+
+.goal-card.archived {
+    opacity: 0.55;
+}
+
+.goal-card.archived .goal-title {
+    color: var(--text-secondary);
+}
+
+.archived-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.archived-section-header span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.archived-section-header::before,
+.archived-section-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.archived-section-header::before {
+    display: none;
+}
+
 .contribution-grid-wrapper {
     overflow-x: auto;
     padding-bottom: 10px;
