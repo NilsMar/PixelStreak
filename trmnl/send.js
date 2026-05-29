@@ -108,7 +108,7 @@ async function signIn() {
 }
 
 async function fetchGoals(accessToken, userId) {
-    const url = `${SUPABASE_URL}/rest/v1/goals?select=*&user_id=eq.${userId}&order=created_at.asc`;
+    const url = `${SUPABASE_URL}/rest/v1/goals?select=*&user_id=eq.${userId}&archived=eq.false&order=created_at.asc`;
     const res = await fetch(url, {
         headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${accessToken}` },
     });

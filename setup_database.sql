@@ -40,5 +40,8 @@ CREATE POLICY "Users can delete own goals"
 -- Create index for faster queries
 CREATE INDEX IF NOT EXISTS goals_user_id_idx ON goals(user_id);
 
+-- Add archived column (run this if upgrading from an earlier version)
+ALTER TABLE goals ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE;
+
 -- Verify setup
 SELECT 'Database setup complete!' as status;

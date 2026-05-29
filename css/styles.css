@@ -370,6 +370,25 @@ h1 {
     color: var(--cell-missed);
 }
 
+.goal-card.archived {
+    opacity: 0.5;
+    filter: grayscale(60%);
+}
+
+.goal-card.archived .goal-title {
+    color: var(--text-secondary);
+}
+
+.archived-section-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 10px 0 4px;
+    border-top: 1px solid var(--border-color);
+}
+
 .contribution-grid-wrapper {
     overflow-x: auto;
     padding-bottom: 10px;
