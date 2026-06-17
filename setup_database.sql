@@ -7,9 +7,13 @@ CREATE TABLE IF NOT EXISTS goals (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   days JSONB DEFAULT '{}'::jsonb,
+  archived BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- If the table already exists, add the archived column (safe to run multiple times)
+ALTER TABLE goals ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT false;
 
 -- Enable Row Level Security
 ALTER TABLE goals ENABLE ROW LEVEL SECURITY;

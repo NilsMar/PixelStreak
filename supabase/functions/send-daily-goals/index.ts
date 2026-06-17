@@ -29,7 +29,8 @@ Deno.serve(async (req) => {
     const { data: goals } = await supabase
       .from('goals')
       .select('id, name, days')
-      .eq('user_id', account.user_id);
+      .eq('user_id', account.user_id)
+      .eq('archived', false);
 
     if (!goals?.length) continue;
 
